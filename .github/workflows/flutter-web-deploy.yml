@@ -1,5 +1,6 @@
 name: Deploy Flutter Web to GitHub Pages
 
+# Trigger the workflow on push to main branch
 on:
   push:
     branches:
@@ -10,18 +11,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Check out the repository
       - uses: actions/checkout@v3
 
+      # Step 2: Install Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # or your Flutter version
+          flutter-version: '3.24.0' # Change if using a different Flutter version
 
+      # Step 3: Get dependencies
+      - name: Flutter Pub Get
+        run: flutter pub get
+
+      # Step 4: Build the web app
       - name: Build web
-        run: flutter build web
+        run: flutter build web --release
 
+      # Step 5: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/web
+          force_orphan: true   # Automatically create gh-pages branch if it doesn't exist
