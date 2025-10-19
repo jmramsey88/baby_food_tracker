@@ -22,13 +22,48 @@ class _HomeScreenState extends State<HomeScreen> {
     box = Hive.box<FoodEntry>(FoodEntry.boxName);
   }
 
+  /// Reset all data in the box
+  Future<void> _clearAllData() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset All Data?'),
+        content: const Text(
+          'This will delete all saved foods and cannot be undone. Are you sure?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await box.clear();
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('All data deleted successfully!')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final entries = box.values.toList().cast<FoodEntry>();
     entries.sort((a, b) => b.dateTried.compareTo(a.dateTried));
 
     final totalFoods = entries.length;
-    final likedFoods = entries.where((e) => e.reaction == ReactionType.like).length;
+    final likedFoods =
+        entries.where((e) => e.reaction == ReactionType.like).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -42,6 +77,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (_) => StatsScreen()),
               );
             },
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'reset') {
+                _clearAllData();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'reset',
+                child: Text('Reset All Data'),
+              ),
+            ],
           ),
         ],
       ),
@@ -60,7 +108,9 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             Expanded(
               child: entries.isEmpty
-                  ? const Center(child: Text('No foods added yet! Tap + to add your first.'))
+                  ? const Center(
+                      child: Text('No foods added yet! Tap + to add your first.'),
+                    )
                   : Column(
                       children: [
                         // Table header
@@ -68,10 +118,38 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
                             children: const [
-                              Expanded(flex: 3, child: Text('Food', style: TextStyle(fontWeight: FontWeight.bold))),
-                              Expanded(flex: 1, child: Text('Reaction', style: TextStyle(fontWeight: FontWeight.bold))),
-                              Expanded(flex: 1, child: Text('# Tried', style: TextStyle(fontWeight: FontWeight.bold))),
-                              Expanded(flex: 2, child: Text('Last Tried', style: TextStyle(fontWeight: FontWeight.bold))),
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  'Food',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  'Reaction',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  '# Tried',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Last Tried',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              SizedBox(width: 40), // space for delete icon
                             ],
                           ),
                         ),
@@ -96,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const AddFoodScreen()),
+            MaterialPageRoute(builder: (_) => AddFoodScreen()),
           );
           setState(() {});
         },
@@ -113,13 +191,26 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 6, offset: const Offset(2, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(2, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Text(value.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          Text(
+            value.toString(),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 6),
-          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -128,6 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _foodRow(FoodEntry entry) {
     Color bgColor;
     String emoji;
+
     switch (entry.reaction) {
       case ReactionType.like:
         bgColor = Colors.pink.shade50;
@@ -152,10 +244,57 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text(entry.name, style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+            flex: 3,
+            child: Text(
+              entry.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
           Expanded(flex: 1, child: Text(emoji, textAlign: TextAlign.center)),
-          Expanded(flex: 1, child: Text(entry.tryCount.toString(), textAlign: TextAlign.center)),
-          Expanded(flex: 2, child: Text(DateFormat('d MMM yyyy').format(entry.dateTried))),
+          Expanded(
+            flex: 1,
+            child: Text(entry.tryCount.toString(), textAlign: TextAlign.center),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(df.format(entry.dateTried)),
+          ),
+          // Delete button
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            tooltip: 'Delete this entry',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Entry?'),
+                  content: Text('Are you sure you want to delete "${entry.name}"?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await entry.delete(); // ✅ works now because FoodEntry extends HiveObject
+                setState(() {});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('"${entry.name}" deleted')),
+                );
+              }
+            },
+          ),
         ],
       ),
     );

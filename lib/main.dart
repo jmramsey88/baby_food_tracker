@@ -6,9 +6,15 @@ import 'screens/foods_to_try_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive
   await Hive.initFlutter();
+
+  // Register adapters
   Hive.registerAdapter(ReactionTypeAdapter());
   Hive.registerAdapter(FoodEntryAdapter());
+
+  // Open the box once
   await Hive.openBox<FoodEntry>(FoodEntry.boxName);
 
   runApp(const BabyFoodTrackerApp());

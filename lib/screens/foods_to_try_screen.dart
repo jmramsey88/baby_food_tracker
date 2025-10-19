@@ -3,9 +3,14 @@ import 'package:hive/hive.dart';
 import '../models/food_entry.dart';
 import 'add_food_screen.dart';
 
-class FoodsToTryScreen extends StatelessWidget {
+class FoodsToTryScreen extends StatefulWidget {
   const FoodsToTryScreen({super.key});
 
+  @override
+  State<FoodsToTryScreen> createState() => _FoodsToTryScreenState();
+}
+
+class _FoodsToTryScreenState extends State<FoodsToTryScreen> {
   final List<String> suggestedFoods = const [
     'Avocado',
     'Carrot',
@@ -16,6 +21,8 @@ class FoodsToTryScreen extends StatelessWidget {
     'Apple',
     'Broccoli',
   ];
+
+  void _refresh() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
@@ -37,13 +44,16 @@ class FoodsToTryScreen extends StatelessWidget {
                 return ListTile(
                   title: Text(food),
                   trailing: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
+                    onPressed: () async {
+                      // Navigate to AddFoodScreen and wait for completion
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => AddFoodScreen(preFillName: food),
                         ),
                       );
+                      // Refresh after returning
+                      _refresh();
                     },
                     child: const Text('Mark as Tried'),
                   ),

@@ -5,7 +5,7 @@ import 'package:hive/hive.dart';
 
 enum ReactionType { like, neutral, dislike, allergy }
 
-class FoodEntry {
+class FoodEntry extends HiveObject { // <-- Extend HiveObject
   static const String boxName = 'food_entries';
 
   String id;
